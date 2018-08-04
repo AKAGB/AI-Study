@@ -9,6 +9,7 @@ from PyQt5.QtWidgets import QVBoxLayout
 from PyQt5.QtWidgets import QGridLayout
 from PyQt5.QtWidgets import QHBoxLayout
 from PyQt5.QtWidgets import QFrame
+from PyQt5.QtWidgets import QInputDialog
 from PyQt5.QtCore import QPropertyAnimation
 from PyQt5.QtCore import Qt
 from PyQt5.QtCore import QPointF
@@ -33,7 +34,7 @@ class Window(QWidget):
         self.labels = []
         self.order = [x for x in range(9)]
         self.group = QSequentialAnimationGroup()
-        self.solutions = [1, 2, 3, 4, 5, 6]
+        self.solutions = []
         self.positions = []
         self.initUI()
     
@@ -61,16 +62,20 @@ class Window(QWidget):
         bt1 = QPushButton("Start")
         bt2 = QPushButton("Reset")
         bt3 = QPushButton("Random")
+        bt4 = QPushButton("Test")
         bt1.setMaximumSize(100, 50)
         bt2.setMaximumSize(100, 50)
         bt3.setMaximumSize(100, 50)
+        bt4.setMaximumSize(100, 50)
         h_layout.addWidget(bt1)
         h_layout.addWidget(bt2)
         h_layout.addWidget(bt3)
+        h_layout.addWidget(bt4)
 
         bt1.clicked.connect(self.startCallback)
         bt2.clicked.connect(self.resetCallback)
         bt3.clicked.connect(self.randomButtonCallback)
+        bt4.clicked.connect(self.testButtonCallback)
         
         i = 0
         for m in range(3):
@@ -104,13 +109,20 @@ class Window(QWidget):
         self.group.start()
     
     def resetCallback(self):
-        self.group.clear()
-        self.reload()
+        text, ok = QInputDialog.getText(self, "Input Dialog", "请输入序列（空白块用0表示）：")
+        if ok:
+            self.initialQuestion(list(map(int, text)))
 
     def randomButtonCallback(self):
         self.group.clear()
         self.randomOrder()
         self.reload()
+
+    def testButtonCallback(self):
+        text, ok = QInputDialog.getText(self, "Input Dialog", "请输入解序列：")
+        if ok:
+            self.solute(list(map(int, text)))
+
 
     def swap(self, aim):
         """交换空白块和相邻块"""
@@ -149,9 +161,20 @@ class Window(QWidget):
         length = len(self.labels)
         for i in range(length):
             self.labels[i].move(self.positions[self.order[i]][0], self.positions[self.order[i]][1])
+        
 
-    def setSolution(self, sol):
+    def initialQuestion(self, order):
+        """初始化问题，order为输入的初始序列"""
+        cnt = 0
+        for each in order:
+            self.order[each] = cnt
+            cnt += 1
+        self.reload()
+
+    def solute(self, sol):
+        """求解问题，sol为求解序列"""
         self.solutions = sol
+        self.startCallback()
 
 
 if __name__ == '__main__':
