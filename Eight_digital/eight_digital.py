@@ -10,15 +10,18 @@ from PyQt5.QtWidgets import QGridLayout
 from PyQt5.QtWidgets import QHBoxLayout
 from PyQt5.QtWidgets import QFrame
 from PyQt5.QtWidgets import QInputDialog
+from PyQt5.QtWidgets import QMessageBox
 from PyQt5.QtCore import QPropertyAnimation
 from PyQt5.QtCore import Qt
 from PyQt5.QtCore import QPointF
 from PyQt5.QtCore import QSequentialAnimationGroup
 
+import solution
+
 class Window(QWidget):
     """
     UI属性如下：
-        self.order追踪块的序列
+        self.order追踪块的序列，下标是块类型，元素是块所在的位置
         self.labels追踪每一个块（Label控件）
         self.solutions是移动块的序列，例如[1, 2, 3]就是把块1,2,3串行地移动到空白块
         self.positions记录坐标，方便移动，它的值是不变的
@@ -36,6 +39,8 @@ class Window(QWidget):
         self.group = QSequentialAnimationGroup()
         self.solutions = []
         self.positions = []
+        # 求解器
+        self.sol = solution.Solution()
         self.initUI()
     
 
@@ -101,12 +106,29 @@ class Window(QWidget):
         main_layout.addWidget(gwg)
         self.setLayout(main_layout)
 
-
-    def startCallback(self):
+    def animate(self):
+        """根据解序列播放移动动画"""
         self.group.clear()
         for each in self.solutions:
             self.swap(each)
         self.group.start()
+
+    def startCallback(self):
+        """利用求解算法求解"""
+        cnt = 0
+        blocks = [x for x in range(9)]
+        input_str = ''
+        for each in self.order:
+            blocks[each] = cnt
+            cnt += 1
+        for each in blocks:
+            input_str += str(each)
+        result = self.sol.A_star_search(input_str)
+        if result:
+            self.moveByAction(result)
+        else:
+            QMessageBox.critical("Error", "该情况无解！")
+        
     
     def resetCallback(self):
         text, ok = QInputDialog.getText(self, "Input Dialog", "请输入序列（空白块用0表示）：")
@@ -121,8 +143,8 @@ class Window(QWidget):
     def testButtonCallback(self):
         text, ok = QInputDialog.getText(self, "Input Dialog", "请输入解序列：")
         if ok:
-            self.solute(list(map(int, text)))
-
+            # self.moveBlock(list(map(int, text)))
+            self.moveByAction(text)
 
     def swap(self, aim):
         """交换空白块和相邻块"""
@@ -135,7 +157,7 @@ class Window(QWidget):
     def moveAnimation(self, obj, start, end):
         """移动obj从坐标start到坐标end"""
         anim = QPropertyAnimation(obj, b'pos')
-        anim.setDuration(1000)
+        anim.setDuration(100)
         anim.setStartValue(QPointF(start[0], start[1]))
         anim.setEndValue(QPointF(end[0], end[1]))
         self.group.addAnimation(anim)
@@ -171,11 +193,44 @@ class Window(QWidget):
             cnt += 1
         self.reload()
 
-    def solute(self, sol):
-        """求解问题，sol为求解序列"""
+    def moveBlock(self, sol):
+        """求解问题，sol为求解序列（移动的块号）"""
         self.solutions = sol
-        self.startCallback()
+        self.animate()
 
+    def moveByAction(self, action):
+        """利用action移动，w向上，s向下，a向左，d向右"""
+        order = self.order[:]
+        self.solutions = []
+        isOut = self.order[0]
+        for each in action:
+            li = isOut
+            if each == 'w':
+                isOut -= 3
+            elif each == 's':
+                isOut += 3
+            elif each == 'a':
+                if isOut % 3 - 1 < 0:
+                    QMessageBox.critical(self, "警告", "错误的移动序列！")
+                    self.solutions = []
+                    return
+                isOut -= 1
+            elif each == 'd':
+                if isOut % 3 + 1 > 2:
+                    QMessageBox.critical(self, "警告", "错误的移动序列！")
+                    self.solutions = []
+                    return
+                isOut += 1
+            if isOut > 8 or isOut < 0:
+                print(isOut)
+                QMessageBox.critical(self, "警告", "错误的移动序列！")
+                self.solutions = []
+                return
+            self.solutions.append(order.index(isOut))
+            order[order.index(isOut)] = li
+            order[0] = isOut
+            
+        self.animate()
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
