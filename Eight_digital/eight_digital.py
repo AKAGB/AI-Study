@@ -168,12 +168,16 @@ class Window(QWidget):
         # 检查是否能拼回，即order的逆序数加上空白块的横纵坐标
         cnt = 0
         length = len(self.order)
-        for i in range(1, length):
+        a = [0] * length
+        for each in self.order:
+            a[each] = cnt
+            cnt += 1
+        a.pop(a.index(0))
+        cnt = 0
+        for i in range(1, length-1):
             for j in range(i):
-                if self.order[j] > self.order[i]:
+                if a[j] > a[i]:
                     cnt += 1
-        cnt += self.order[0] // 4 + self.order[0] % 4
-
         # 对不可通关情况处理，即调换非空白块
         if cnt % 2:
             self.order[1], self.order[2] = self.order[2], self.order[1]
