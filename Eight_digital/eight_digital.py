@@ -121,13 +121,16 @@ class Window(QWidget):
         for each in self.order:
             blocks[each] = cnt
             cnt += 1
-        for each in blocks:
-            input_str += str(each)
-        result = self.sol.A_star_search(input_str)
-        if result:
+        check = blocks[:]
+        check.pop(check.index(0))
+        cnt = self.sequeue(check)
+        if cnt % 2 == 0:
+            for each in blocks:
+                input_str += str(each)
+            result = self.sol.A_star_search(input_str)
             self.moveByAction(result)
         else:
-            QMessageBox.critical("Error", "该情况无解！")
+            QMessageBox.critical(self, "Error", "该情况无解！")
         
     
     def resetCallback(self):
@@ -173,14 +176,19 @@ class Window(QWidget):
             a[each] = cnt
             cnt += 1
         a.pop(a.index(0))
-        cnt = 0
-        for i in range(1, length-1):
-            for j in range(i):
-                if a[j] > a[i]:
-                    cnt += 1
+        cnt = self.sequeue(a)
         # 对不可通关情况处理，即调换非空白块
         if cnt % 2:
             self.order[1], self.order[2] = self.order[2], self.order[1]
+
+    def sequeue(self, lst):
+        """返回序列逆序数"""
+        cnt = 0
+        for i in range(1, len(lst)):
+            for j in range(i):
+                if lst[j] > lst[i]:
+                    cnt += 1
+        return cnt
 
     def reload(self):
         """重新加载内容"""
