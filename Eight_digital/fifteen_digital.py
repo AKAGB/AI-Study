@@ -1,6 +1,8 @@
 import math
 from enum import Enum
 
+aim = [(x, y) for x in range(4) for y in range(4)]
+
 class Result(Enum):
     Found = 1
     Not_Found = 2
@@ -9,8 +11,7 @@ class State:
     """
     状态类：记录每一个结点的状态
     """
-    aim = [(x, y) for x in range(4) for y in range(4)]
-
+    
     def __init__(self, depth=0, order=(), num=0):
         self.order = order[:]           # 记录块顺序，下标是块位置，元素是块类型，注意和UI中的order相反
         self.depth = depth              # 当前深度，即走到当前状态所需要的代价
@@ -23,8 +24,6 @@ class State:
         """重载小于号，方便堆的操作"""
         return self.fn < other.fn
 
-    def __eq__(self, other):
-        return self.order == other.order
 
     def calc_evaluation(self):
         """启发式函数为曼哈顿距离"""
@@ -32,12 +31,10 @@ class State:
         result = 0
         for i in range(16):
             if order[i]:
-                cur = (order[i] - 1) // 4, (order[i] - 1) % 4
-                result += abs(cur[0]-State.aim[i][0]) + abs(cur[1]-State.aim[i][1])
+                result += abs(aim[order[i]-1][0]-aim[i][0]) + abs(aim[order[i]-1][1]-aim[i][1])
         self.hn = result
         self.fn = self.depth + self.hn
-
-
+    
 def successors(node):
     result = []
     actions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
@@ -53,11 +50,7 @@ def successors(node):
     return sorted(result)
 
 def is_goal(node):
-    # goal = list(range(1, 16)) + [0]
     return node.order == (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0)
-
-def cost(node, succ):
-    return 1
 
 def ida_star(root):
     bound = root.hn
@@ -65,7 +58,7 @@ def ida_star(root):
     hash_table = set()
     hash_table.add(root.order)
     while True:
-        print(bound)
+        # print(bound)
         t = search(path, hash_table, 0, bound)
         if t == Result.Found:
             return path, bound
@@ -96,17 +89,17 @@ def search(path, hash_table, g, bound):
 
 
 if __name__ == '__main__':
-    # 56:
-    # problem = [11, 3, 1, 7, 4, 6, 8, 2, 15, 9, 10, 13, 14, 12, 5, 0]
-    # problem = [1, 3, 14, 4, 7, 11, 0, 6, 5, 9, 8, 12, 13, 10, 15, 2]
-    # problem = [1, 2, 3, 4, 5, 7, 0, 8, 9, 6, 10, 12, 13, 14, 11, 15]
-    problem = (9, 6, 3, 4, 15, 1, 7, 8, 14, 0, 11, 10, 2, 5, 13, 12)
-    # 48:problem = [6, 10, 3, 15, 14, 8, 7, 11, 5, 1, 0, 2, 13, 12, 9, 4]
-    # 49:problem = (14, 10, 6, 0, 4, 9, 1, 8, 2, 3, 5, 11, 12, 13, 7, 15)
-    # 62:problem = [0, 5, 15, 14, 7, 9, 6, 13, 1, 2, 12, 10, 8, 11, 4, 3]
-    root = State(0, problem, 0)
+    # problem = (9, 6, 3, 4, 15, 1, 7, 8, 14, 0, 11, 10, 2, 5, 13, 12)
+    # problem = (6, 10, 3, 15, 14, 8, 7, 11, 5, 1, 0, 2, 13, 12, 9, 4)
+    print('Please input the case: ')
+    problem = []
+    for i in range(4):
+        data = input()
+        problem.extend(list(map(int, data.split(' '))))
+    root = State(0, tuple(problem), 0)
     solution = ida_star(root)
     if solution != Result.Not_Found:
+        print('Lower bound:', root.hn)
         print('Total:', solution[1])
         for each in solution[0][1:]:
             print(each.num, end=' ')

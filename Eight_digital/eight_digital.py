@@ -17,6 +17,14 @@ from PyQt5.QtCore import QPointF
 from PyQt5.QtCore import QSequentialAnimationGroup
 
 import solution
+from PyQt5.QtWidgets import QInputDialog
+from PyQt5.QtWidgets import QMessageBox
+from PyQt5.QtCore import QPropertyAnimation
+from PyQt5.QtCore import Qt
+from PyQt5.QtCore import QPointF
+from PyQt5.QtCore import QSequentialAnimationGroup
+
+import solution
 
 class Window(QWidget):
     """
