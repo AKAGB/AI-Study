@@ -1,0 +1,52 @@
+
+1:
+setof(X,branch(X,beigang),Ans).
+
+
+2:
+% district_yuexiang(X):-
+%    restaurant(Z,_,yuecai),restaurant(M,_,xiangcai),
+%    branch(Z,Y),branch(M,N),district(Y,X),district(N,X).
+setof(X,district_yuexiang(X),Ans).
+
+
+3:
+% return minmum of list.
+% find_min([X],X).
+% find_min(List, Minimum):- List = [Head|Tail],
+%     find_min(Tail, TailMin),
+%     (Head < TailMin ->
+%        Minimum is Head;
+%        Minimum is TailMin
+%     ).
+% Cnt is number of branches of Rest.
+% branches_of_rest(Rest, Cnt):-
+%    restaurant(Rest,_,_),findall(X, branch(Rest,X), List),
+%    length(List, Cnt).
+% return all branch.
+% all_branches(Bran):-
+%    findall(X, (restaurant(Rs,_,_),branches_of_rest(Rs, X)) ,Bran).
+all_branches(Bs),find_min(Bs, MinBranches),
+findall(X, branches_of_rest(X, MinBranches), Ans).
+
+4:
+% restes_of_area(Area, Cnt):-
+%    branch(_,Area),findall(X, branch(X, Area), Ans),
+%    length(Ans, Cnt).
+findall(X, (branch(_,X),restes_of_area(X,K),K>1), List),
+setof(X, member(X,List), Ans).
+
+5:
+% allRestYear(T):-findall(X, restaurant(_,X,_), T).
+allRestYear(Years),find_min(Years, MinYear),
+findall(X,restaurant(X,MinYear,_),Ans).
+
+6:
+findall(X, (branches_of_rest(X, K), K >= 10), Ans).
+
+7:
+sameDistrict(Rest1, Rest2):-
+    branch(Rest1, Area1),
+    branch(Rest2, Area2),
+    Rest1\=Rest2,district(Area1, Z),
+    district(Area2, Z).
