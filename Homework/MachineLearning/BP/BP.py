@@ -11,19 +11,22 @@ import pandas as pd
 
 class NeuralNetwork:
     LEARNING_RATE = 0.5
-    def __init__(self, num_inputs, num_hidden, num_outputs, hidden_layer_weights = None, hidden_layer_bias = None, output_layer_weights = None, output_layer_bias = None):
+    def __init__(self, num_inputs, num_hidden, num_outputs, hidden_layer_weights = None, output_layer_weights = None):
     #Your Code Here
         self.num_inputs = num_inputs
         self.num_hidden = num_hidden
         self.num_outputs = num_outputs
         
-        self.hidden_layer = NeuronLayer(num_hidden, hidden_layer_bias)
-        self.output_layer = NeuronLayer(num_outputs, output_layer_bias)
+        self.hidden_layer = NeuronLayer(num_hidden)
+        self.output_layer = NeuronLayer(num_outputs)
 
         if hidden_layer_weights is None:
-            hidden_layer_weights = np.random.randn(num_hidden, num_inputs)
+            hidden_layer_weights = np.random.randn(num_hidden, num_inputs + 1)
         if output_layer_weights is None:
-            output_layer_weights = np.random.randn(num_outputs, num_hidden)
+            output_layer_weights = np.random.randn(num_outputs, num_hidden + 1)
+
+        self.init_h_w = hidden_layer_weights
+        self.init_o_w = output_layer_weights
 
         self.init_weights_from_inputs_to_hidden_layer_neurons(hidden_layer_weights)
         self.init_weights_from_hidden_layer_neurons_to_output_layer_neurons(output_layer_weights)
@@ -101,7 +104,7 @@ class NeuralNetwork:
         #Your Code Here
         result = 0
         for example in training_sets:
-            inputs, outputs = example
+            inputs, outputs = example[:-1], np.array([example[-1]])
             self.feed_forward(inputs)
             all_err = [self.output_layer.neurons[i].calculate_error(outputs[i]) for i in range(self.num_outputs)]
             result += sum(all_err)
@@ -109,14 +112,10 @@ class NeuralNetwork:
 
 
 class NeuronLayer:
-    def __init__(self, num_neurons, bias):
-
-        # Every neuron in a layer shares the same bias
-        self.bias = bias if bias else random.random()
-
+    def __init__(self, num_neurons):
         self.neurons = []
         for i in range(num_neurons):
-            self.neurons.append(Neuron(self.bias))
+            self.neurons.append(Neuron())
 
     def inspect(self):
         print('Neurons:', len(self.neurons))
@@ -124,7 +123,6 @@ class NeuronLayer:
             print(' Neuron', n)
             for w in range(len(self.neurons[n].weights)):
                 print('  Weight:', self.neurons[n].weights[w])
-            print('  Bias:', self.bias)
 
     def feed_forward(self, inputs):
         outputs = [neuron.calculate_output(inputs) for neuron in self.neurons]
@@ -135,8 +133,7 @@ class NeuronLayer:
         return np.array(outputs)
 
 class Neuron:
-    def __init__(self, bias, weights=[]):
-        self.bias = bias
+    def __init__(self, weights=[]):
         self.weights = weights
         self.inputs = []
         self.total_net_input = 0
@@ -144,24 +141,20 @@ class Neuron:
 
     def calculate_output(self, inputs):
         #Your Code Here
-        self.inputs = inputs
-        self.calculate_total_net_input(inputs)
+        self.inputs = np.hstack((inputs, np.array(1)))
+        self.calculate_total_net_input()
         self.output = self.squash(self.total_net_input)
         return self.output
 
-    def calculate_total_net_input(self, inputs):
+    def calculate_total_net_input(self):
         #Your Code Here
-        self.total_net_input = np.dot(self.weights, inputs) + self.bias
+        self.total_net_input = np.dot(self.weights, self.inputs)
 
     # Apply the logistic function to squash the output of the neuron
     # The result is sometimes referred to as 'net' [2] or 'net' [1]
     def squash(self, total_net_input):
     #Your Code Here
         ex = math.e**(-total_net_input)
-        if math.isinf(ex):
-            ex = math.e**700
-        if ex == 0:
-            ex = math.e**-30
         return 1 / (1 + ex)
 
     # Determine how much the neuron's total input has to change to move closer to the expected output
@@ -229,40 +222,66 @@ class Neuron:
 # nn.inspect()
 
 def preProcess(filepath):
-    Data = pd.read_csv(filepath, header=None, sep='\s+')
-    Data = Data.replace('?', -1)
+    Data = pd.read_csv(filepath, header=None, sep='\s+', dtype=np.object)
+    Data = Data.replace('?', '-1')
+    Data = pd.DataFrame(Data, dtype=np.float)
+    Data[2] /= 1000000
+    Data[3] /= 100
+    Data[4] /= 100
+    Data[5] /= 100
+    Data[18] /= 100
+    Data[19] /= 100
+    Data[24] /= 10000
     Data[27] -= 1
-    Data = pd.DataFrame(Data, dtype='float')
     return Data
 
 if __name__ == "__main__":
     train_sets = preProcess('horse-colic.data')
     test_sets = preProcess('horse-colic.test')
-    train_sets = train_sets[:50]
     train_length = len(train_sets)
     test_length = len(test_sets)
-    nn = NeuralNetwork(27, 10, 1, hidden_layer_weights=None, 
-             hidden_layer_bias=0.35, output_layer_weights=None, output_layer_bias=0.6)
+    #hidden_layer_weights = np.loadtxt('good_init/5/1/hidden_weight.txt')
+    #output_layer_weights = np.loadtxt('good_init/5/1/output_weight.txt')
+    #output_layer_weights = output_layer_weights.reshape(1, 6)
+    hidden_layer_weights = None
+    output_layer_weights = None
+    nn = NeuralNetwork(27, 5, 1, hidden_layer_weights=hidden_layer_weights, output_layer_weights=output_layer_weights)
     
+    np.savetxt('hidden_weight.txt', nn.init_h_w)
+    np.savetxt('output_weight.txt', nn.init_o_w)
+
     # train
-    for i in range(10):
-        for j in range(train_length):
-            ex = np.array(train_sets.iloc[j])
-            # print(ex)
-            nn.train(np.array(ex[:27]), [ex[27]])
-
-    nn.inspect()
-
-    # test
+    for k in range(100):
+        for i in range(10):
+            for j in range(train_length):
+                ex = np.array(train_sets.iloc[j])
+                # print(ex)
+                nn.train(np.array(ex[:27]), [ex[27]])
+        err = nn.calculate_total_error(np.array(train_sets))
+        err_test = nn.calculate_total_error(np.array(test_sets))
+        # NeuralNetwork.LEARNING_RATE *= 0.9
+        print('Train%d: \t%.9f' % (k+1, err))
+        if (k+1) % 3 == 0:
+            acc = 0
+            for i in range(test_length):
+                ex = np.array(test_sets.iloc[i])
+                inputs, output = ex[:27], ex[27]
+                predict = round(nn.feed_forward(inputs)[0])
+                # print(abs(predict - output))
+                if abs(predict - output) <= 0.5:
+                    acc += 1
+            print(acc)
+            print('Accuracy rate:', acc / test_length)
+    
+    print('Finally:')
     acc = 0
     for i in range(test_length):
         ex = np.array(test_sets.iloc[i])
         inputs, output = ex[:27], ex[27]
-        predict = nn.feed_forward(inputs)
-        print(predict)
-        print(abs(predict - output))
+        predict = round(nn.feed_forward(inputs)[0])
+        # print(abs(predict - output))
         if abs(predict - output) <= 0.5:
             acc += 1
     print(acc)
     print('Accuracy rate:', acc / test_length)
-    
+
