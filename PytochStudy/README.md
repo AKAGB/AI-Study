@@ -1,0 +1,1 @@
+You can view the ".ipynb" file by copying url to [http://nbviewer.jupyter.org/](http://nbviewer.jupyter.org/).
