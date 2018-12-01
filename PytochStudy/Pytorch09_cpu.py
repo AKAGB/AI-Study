@@ -62,8 +62,8 @@ train_loader = Data.DataLoader(
 
 
 # volatile=True相当于 requires_grad=False
-test_x = Variable(torch.unsqueeze(test_data.test_data, dim=1), volatile=True).type(torch.FloatTensor)[:2000].cuda()/255
-test_y = test_data.test_labels[:2000].cuda()
+test_x = Variable(torch.unsqueeze(test_data.test_data, dim=1), volatile=True).type(torch.FloatTensor)[:2000]/255
+test_y = test_data.test_labels[:2000]
 
 
 # ## 2. CNN模型
@@ -104,8 +104,7 @@ class CNN(torch.nn.Module):
 
 
 cnn = CNN()
-cnn.cuda()
-print(cnn)
+# print(cnn)
 
 
 # ## 3. 训练
@@ -140,12 +139,13 @@ def plot_with_labels(lowDWeights, labels):
     plt.pause(0.01)
 
 
-# In[ ]:
+# In[28]:
+
 
 for epoch in range(EPOCH):
     for step, (x, y) in enumerate(train_loader):
-        b_x = Variable(x).cuda()
-        b_y = Variable(y).cuda()
+        b_x = Variable(x)
+        b_y = Variable(y)
         
         output = cnn(b_x)[0]
         loss = loss_func(output, b_y)
@@ -156,12 +156,11 @@ for epoch in range(EPOCH):
         
         if step % 50 == 0:
             test_output, last_layer = cnn(test_x)
-            pred_y = torch.max(test_output, 1)[1].cuda().data
-
-            accuracy = torch.sum(pred_y == test_y).type(torch.FloatTensor) / test_y.size(0)
-            print('Epoch', epoch, '| train loss: %.4f' % loss.data.cpu().numpy(), '| test accuracy: %.2f' % accuracy)
+            pred_y = torch.max(test_output, 1)[1].data.numpy()
+            accuracy = float((pred_y == test_y.data.numpy()).astype(int).sum()) / float(test_y.size(0))
+            print('Epoch', epoch, '| train loss: %.4f' % loss.data.numpy(), '| test accuracy: %.2f' % accuracy)
             
-            
-pred_y = torch.max(test_output, 1)[1].cuda().data
+test_output, _ = cnn(test_x[:10])
+pred_y = torch.max(test_output, 1)[1].data.numpy()
 print(pred_y, 'prediction number')
-print(test_y[:10], 'real number')
+print(test_y[:10].numpy(), 'real number')
