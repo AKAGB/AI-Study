@@ -1,30 +1,14 @@
-import sys
 import random
+import sys
 
-from PyQt5.QtWidgets import QApplication
-from PyQt5.QtWidgets import QWidget
-from PyQt5.QtWidgets import QPushButton
-from PyQt5.QtWidgets import QLabel
-from PyQt5.QtWidgets import QVBoxLayout
-from PyQt5.QtWidgets import QGridLayout
-from PyQt5.QtWidgets import QHBoxLayout
-from PyQt5.QtWidgets import QFrame
-from PyQt5.QtWidgets import QInputDialog
-from PyQt5.QtWidgets import QMessageBox
-from PyQt5.QtCore import QPropertyAnimation
-from PyQt5.QtCore import Qt
-from PyQt5.QtCore import QPointF
-from PyQt5.QtCore import QSequentialAnimationGroup
+from PyQt5.QtCore import (QPointF, QPropertyAnimation,
+                          QSequentialAnimationGroup, Qt)
+from PyQt5.QtWidgets import (QApplication, QFrame, QGridLayout, QHBoxLayout,
+                             QInputDialog, QLabel, QMessageBox, QPushButton,
+                             QVBoxLayout, QWidget)
 
 import solution
-from PyQt5.QtWidgets import QInputDialog
-from PyQt5.QtWidgets import QMessageBox
-from PyQt5.QtCore import QPropertyAnimation
-from PyQt5.QtCore import Qt
-from PyQt5.QtCore import QPointF
-from PyQt5.QtCore import QSequentialAnimationGroup
 
-import solution
 
 class Window(QWidget):
     """
